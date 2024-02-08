@@ -6,7 +6,7 @@
 #include <chrono>
 #include <iostream>
 
-namespace QueryGeneration {
+namespace driver{
     class LogFileHandler {
     private:
         static std::ofstream logFile;

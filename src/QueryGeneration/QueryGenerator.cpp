@@ -1,6 +1,6 @@
 #include "QueryGenerator.h"
 
-namespace QueryGeneration {
+namespace  driver{
     std::string QueryGenerator::generateDropDatabaseQuery(const std::string& dbName) {
         return "DROP DATABASE IF EXISTS " + dbName + ";";
     }

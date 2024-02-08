@@ -1,6 +1,6 @@
 #include "DatabaseHandler.h"
 
-namespace QueryGeneration {
+namespace driver {
 
     DatabaseHandler::DatabaseHandler(const std::string& host, const std::string& port, const std::string& user, const std::string& password)
         : driver(nullptr), con(nullptr), host_(host), port_(port), user_(user), password_(password) {}

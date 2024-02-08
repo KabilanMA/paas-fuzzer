@@ -1,6 +1,6 @@
 #include "LogFileHandler.h"
 
-namespace QueryGeneration {
+namespace driver {
     std::ofstream LogFileHandler::logFile;
     std::chrono::high_resolution_clock::time_point LogFileHandler::startTime;
     std::chrono::high_resolution_clock::time_point LogFileHandler::stopTime;

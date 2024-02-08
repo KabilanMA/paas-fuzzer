@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace QueryGeneration {
+namespace  driver{
 
     class QueryGenerator {
     public:
