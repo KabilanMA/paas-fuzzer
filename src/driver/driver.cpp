@@ -92,6 +92,62 @@ void extractOptionalArgument(std::unordered_map<std::string, std::string> &argum
     }
 }
 
+// Function to set up the database and execute queries
+void setupAndExecuteQueries() {
+    //Read credentials from the file for local machine
+    std::map<std::string, std::string> credentials_local = driver::QueryExecutor::readCredentials("credentials_local.txt");
+
+    // Check if all required credentials are present
+    if (credentials_local.find("host") == credentials_local.end() ||
+        credentials_local.find("port") == credentials_local.end() ||
+        credentials_local.find("user") == credentials_local.end() ||
+        credentials_local.find("password") == credentials_local.end()) {
+        std::cerr << "Invalid or incomplete credentials in the file." << std::endl;
+        return;
+    }
+
+    const std::string host_local = credentials_local["host"];
+    const std::string port_local = credentials_local["port"];
+    const std::string user_local = credentials_local["user"];
+    const std::string password_local = credentials_local["password"];
+
+    driver::DatabaseHandler dbHandler(host_local, port_local, user_local, password_local);
+
+    // //Read credentials from the file for cluster
+    // std::map<std::string, std::string> credentials_cluster = driver::QueryExecutor::readCredentials("credentials_cluster.txt");
+
+    // // Check if all required credentials are present
+    // if (credentials_cluster.find("host") == credentials_cluster.end() ||
+    //     credentials_cluster.find("port") == credentials_cluster.end() ||
+    //     credentials_cluster.find("user") == credentials_cluster.end() ||
+    //     credentials_cluster.find("password") == credentials_cluster.end()) {
+    //     std::cerr << "Invalid or incomplete credentials in the file." << std::endl;
+    //     return;
+    // }
+
+    // const std::string host_cluster = credentials_cluster["host"];
+    // const std::string port_cluster = credentials_cluster["port"];
+    // const std::string user_cluster = credentials_cluster["user"];
+    // const std::string password_cluster = credentials_cluster["password"];
+
+    // driver::DatabaseHandler dbHandler(host_cluster, port_cluster, user_cluster, password_cluster);
+
+    if (dbHandler.connect()) {
+        driver::LogFileHandler::clearLogFile("output/log.txt");
+        driver::QueryFileHandler::clearQueryFile("output/queries.txt");
+
+        if (driver::LogFileHandler::createLogFile("log.txt")) {
+            std::string queryFileName = "output/queries.txt";
+            driver::QueryFileHandler::clearQueryFile(queryFileName);
+            driver::QueryFileHandler::createQueryFile(queryFileName);
+
+            // Execute queries
+            driver::QueryExecutor::executeQueries(queryFileName, dbHandler);
+        }
+    }
+}
+
+
 int main(int argc, char *argv[])
 {
     char *filePath = argv[1];
@@ -152,12 +208,15 @@ int main(int argc, char *argv[])
     {
         printf("Initial Deployment Failed\n");
         return 1;
+        // std::cout << "Initial Deployment Failed\n" << std::endl;
     }
 
     std::thread myThread(updatePatches, std::ref(patches), std::ref(clusterAccess), inputJson, verbose);
     // query generator and kubernetes service connector
+    std::thread queryThread(setupAndExecuteQueries);
 
     myThread.join();
+    queryThread.join();
 
     cJSON_Delete(inputJson);
     cJSON_Delete(originalJson);

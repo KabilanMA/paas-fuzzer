@@ -13,6 +13,12 @@
 
 #include "JsonFileHandler.h"
 
+#include "../QueryGeneration/QueryExecutor.h"
+#include "../QueryGeneration/QueryGenerator.h"
+#include "../QueryGeneration/QueryFileHandler.h"
+#include "../QueryGeneration/DatabaseHandler.h"
+#include "../QueryGeneration/LogFileHandler.h"
+
 namespace driver
 {
 }
