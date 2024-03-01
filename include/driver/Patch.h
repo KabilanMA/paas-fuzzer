@@ -12,6 +12,8 @@ namespace driver
     class Patch
     {
     public:
+        static int id;
+
         Patch(std::vector<std::string> keys, double score, std::string value);
 
         // getters
@@ -20,6 +22,7 @@ namespace driver
         std::string getValue() const;
         std::string getPatchPathString() const;
         std::string getPatchValue() const;
+        std::string getId() const;
 
         // setters
         bool setScore(double newScore);
@@ -31,6 +34,7 @@ namespace driver
         std::pair<double, double> calculateStats(std::vector<double> values) const;
 
         // members
+        std::string stringId;
         double score;
         std::string value;
         std::vector<std::string> keys;

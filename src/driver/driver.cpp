@@ -9,8 +9,57 @@ bool compareByFloatValue(const driver::Patch &obj1, const driver::Patch &obj2)
     return obj1.getScore() > obj2.getScore();
 }
 
-void updatePatches(std::vector<driver::Patch> &patches, scheduler::ClusterAccess &clusterAccess, cJSON *initialConfig, int verbose)
+void updatePatches(std::vector<driver::Patch> &patches, scheduler::ClusterAccess &clusterAccess, cJSON *initialConfig, Evaluator &logger, int verbose)
 {
+    // Use a random number for uniquen patch paermutaion file
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> distribution(0, 9999);
+    int random = distribution(gen);
+
+    std::string logDirectory = "./Report_" + std::to_string(random);
+    // if the directory and file does not exists, create it.
+    if (!fs::exists(logDirectory))
+    {
+        std::cout << "Created the Report Directory" << std::endl;
+        fs::create_directory(logDirectory);
+    }
+
+    logDirectory += "/patchList" + std::to_string(random) + ".txt";
+    std::ifstream infile(logDirectory);
+    if (infile.good())
+    {
+        std::cout << "File already exists." << std::endl;
+    }
+    else
+    {
+        std::ofstream outputFile(logDirectory);
+        if (outputFile.is_open())
+        {
+            std::cout << "Empty file created successfully." << std::endl;
+            outputFile.close();
+        }
+        else
+        {
+            std::cerr << "Error: Unable to create file." << std::endl;
+        }
+    }
+
+    std::ofstream outfile(logDirectory, std::ios::app);
+    if (outfile.is_open())
+    {
+        for (Patch &patch : patches)
+        {
+            outfile << patch.getId() << " : \n\t";
+            outfile << patch << std::endl;
+        }
+        outfile.close();
+    }
+    else
+    {
+        std::cout << "Unable to open file: " << logDirectory << std::endl;
+    }
+
     if (verbose > 10)
     {
         printf("-------------------------------\nAvailable patch count: %li\n", patches.size());
@@ -25,6 +74,7 @@ void updatePatches(std::vector<driver::Patch> &patches, scheduler::ClusterAccess
     driver::JsonFileHandler jsonFH;
     apiClient_t *apiClient;
     clusterAccess.createAPI_client(&apiClient);
+    // int a = 5;
     while (true)
     {
         for (driver::Patch &patch : patches)
@@ -66,10 +116,13 @@ void updatePatches(std::vector<driver::Patch> &patches, scheduler::ClusterAccess
             auto endTime = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
             patch.setScore(duration.count());
+            // std::cout << patch.getScore() << std::endl;
             std::cout << "Time duration: " << duration.count() << " milliseconds" << std::endl;
         }
+        logger.logPatches(patches, "empty", random);
         std::sort(patches.begin(), patches.end(), compareByFloatValue);
-        break;
+        // break;
+        // a--;
     }
 }
 
@@ -211,7 +264,8 @@ int main(int argc, char *argv[])
         // std::cout << "Initial Deployment Failed\n" << std::endl;
     }
 
-    std::thread myThread(updatePatches, std::ref(patches), std::ref(clusterAccess), inputJson, verbose);
+    Evaluator evaluator;
+    std::thread myThread(updatePatches, std::ref(patches), std::ref(clusterAccess), inputJson, std::ref(evaluator), verbose);
     // query generator and kubernetes service connector
     std::thread queryThread(setupAndExecuteQueries);
 

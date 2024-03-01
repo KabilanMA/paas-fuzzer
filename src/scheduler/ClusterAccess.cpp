@@ -458,6 +458,9 @@ namespace scheduler
             return false;
         }
 
+        /**
+         * checking the configuration file in etcd
+         */
         int desiredReplicaCount = cJSON_GetObjectItem(cJSON_GetObjectItem(initialConfig, "spec"), "replicas")->valueint;
         // std::cout << "Desired Count: " << desiredReplicaCount << std::endl;
         cJSON *currentState = get_namespaced_deployment(initialConfig, apiClient, "default", verbose); // get the current deployment state json file
@@ -467,10 +470,13 @@ namespace scheduler
         // if relicaset count doesn't match; propogation not completed
         if (desiredReplicaCount != currentReplicaCount)
         {
-            std::cout << "not mattching count" << std::endl;
+            std::cout << "not matching count" << std::endl;
             return false;
         }
 
+        /**
+         * Checking the resources
+         */
         char *deploymentName = cJSON_GetObjectItem(initialConfig, "metadata")->child->valuestring;
         char labelSelector[100];
         snprintf(labelSelector, sizeof(labelSelector), "app.kubernetes.io/name=%s", deploymentName);

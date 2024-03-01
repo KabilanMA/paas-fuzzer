@@ -3,7 +3,8 @@
 
 namespace driver
 {
-    Patch::Patch(std::vector<std::string> keys, double score, std::string value) : keys(keys), score(score), value(value)
+    int Patch::id = 0;
+    Patch::Patch(std::vector<std::string> keys, double score, std::string value) : keys(keys), score(score), value(value), stringId(std::to_string(id++))
     {
         this->times = {};
     }
@@ -68,8 +69,12 @@ namespace driver
 
     bool Patch::setScore(double newScore)
     {
-        this->times.push_back(newScore);
+        times.push_back(newScore);
         auto [mean, stdDev] = this->calculateStats(this->times);
+        if (stdDev == 0)
+        {
+            stdDev = 1;
+        }
         score += ((newScore - mean) / stdDev);
         return true;
     }
@@ -90,6 +95,11 @@ namespace driver
         double stdDev = std::sqrt(variance);
 
         return {mean, stdDev};
+    }
+
+    std::string Patch::getId() const
+    {
+        return stringId;
     }
 
     std::ostream &operator<<(std::ostream &os, const Patch &obj)

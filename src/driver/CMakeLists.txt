@@ -11,6 +11,7 @@ add_executable(ConfigGenerator
                 ConfigGenerator.cpp
                 JsonFileHandler.cpp
                 Patch.cpp
+                Evaluator.cpp
                 ../scheduler/ClusterAccess.cpp
 
                 ../QueryGeneration/QueryExecutor.cpp

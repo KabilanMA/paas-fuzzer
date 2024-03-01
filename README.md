@@ -12,6 +12,10 @@ Developing a fuzzing framework for testing the scheduler module of container orc
 
 `minikube start --extra-config=kubelet.allowed-unsafe-sysctls=net.core.somaxconn`
 
+
+### Setup
+Find the attachment in the `./setup guide` directory
+
 ### Methodology
 
 ![Methodology of Fuzzing Cloud PaaS Platforms](static/Operation-flow.png)

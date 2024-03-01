@@ -10,6 +10,7 @@
 #include "constant.h"
 #include "ClusterAccess.h"
 #include "ConfigGenerator.h"
+#include "Evaluator.h"
 
 #include "JsonFileHandler.h"
 
