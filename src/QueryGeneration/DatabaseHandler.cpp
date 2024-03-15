@@ -1,6 +1,6 @@
 #include "DatabaseHandler.h"
 
-namespace QueryGeneration {
+namespace driver {
 
     DatabaseHandler::DatabaseHandler(const std::string& host, const std::string& port, const std::string& user, const std::string& password)
         : driver(nullptr), con(nullptr), host_(host), port_(port), user_(user), password_(password) {}
@@ -28,6 +28,7 @@ namespace QueryGeneration {
     sql::Connection* DatabaseHandler::getConnection() const {
         return con;
     }
+    
 
     void DatabaseHandler::executeQueriesFromFile(const std::string& fileName) {
         std::ifstream queryFile(fileName);
@@ -54,9 +55,11 @@ namespace QueryGeneration {
 
     void DatabaseHandler::enableQueryProfiling() {
         sql::Statement *stmt = con->createStatement();
+        std::cout << "success3" << std::endl;
         if (stmt) {
             try {
                 stmt->execute("SET profiling = 1");
+                std::cout << "success4" << std::endl;
             } catch (sql::SQLException& e) {
                 std::cerr << "Error setting query profiling: " << e.what() << std::endl;
                 std::cerr << "MySQL error code: " << e.getErrorCode() << std::endl;

@@ -1,6 +1,6 @@
 #include "QueryGenerator.h"
 
-namespace QueryGeneration {
+namespace  driver{
     std::string QueryGenerator::generateDropDatabaseQuery(const std::string& dbName) {
         return "DROP DATABASE IF EXISTS " + dbName + ";";
     }
@@ -20,7 +20,7 @@ namespace QueryGeneration {
         return "INSERT INTO " + tableName + " (id, field1, field2, field3, field4, field5, field6) "
             "VALUES (" + std::to_string(id) + ", 'Name_" + std::to_string(id) + "', "
             + std::to_string(rand() % 100) + ", " + std::to_string((double)rand() / RAND_MAX * 100.0) + ", "
-            "'2022-01-01', " + std::to_string(rand() % 2) + ", 'SomeText');";
+            "'2022-10-01', " + std::to_string(rand() % 2) + ", 'SomeText');";
     }
 
     std::string QueryGenerator::generateAdvancedQuery(const std::string& tableName) {

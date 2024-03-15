@@ -1,6 +1,6 @@
 #include "QueryFileHandler.h"
 
-namespace QueryGeneration {
+namespace driver {
 
     bool QueryFileHandler::createQueryFile(const std::string& fileName) {
         std::ofstream queryFile(fileName);

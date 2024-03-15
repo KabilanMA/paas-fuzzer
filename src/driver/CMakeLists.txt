@@ -13,21 +13,28 @@ add_executable(ConfigGenerator
                 Patch.cpp
                 Evaluator.cpp
                 ../scheduler/ClusterAccess.cpp
+
+                ../QueryGeneration/QueryExecutor.cpp
+                ../QueryGeneration/DatabaseHandler.cpp
+                ../QueryGeneration/LogFileHandler.cpp
+                ../QueryGeneration/QueryFileHandler.cpp
+                ../QueryGeneration/QueryGenerator.cpp
                 )
 
 # Specify include directories
 target_include_directories(ConfigGenerator 
     PRIVATE 
-    "/home/kabilan/Downloads/c/kubernetes" 
-    "/home/kabilan/Desktop/FYP/implementation/implementation-2/paas-fuzzer/include/driver"
-    "/home/kabilan/Desktop/FYP/implementation/implementation-2/paas-fuzzer/include/scheduler"
-    "/home/kabilan/Desktop/FYP/implementation/implementation-2/paas-fuzzer/vcpkg/installed/x64-linux/include"
+    "/home/tharsha/Desktop/FYP/c/kubernetes" 
+    "/home/tharsha/Desktop/FYP/paas-fuzzer/include/driver"
+    "/home/tharsha/Desktop/FYP/paas-fuzzer/include/scheduler"
+    "/home/tharsha/Desktop/FYP/paas-fuzzer/vcpkg/installed/x64-linux/include"
+    "/home/tharsha/Desktop/FYP/paas-fuzzer/include/QueryGeneration"
 )
 
 # Specify library directories
 link_directories(
-    "/home/kabilan/Downloads/c/kubernetes/build/**"
-    "/home/kabilan/Desktop/FYP/implementation/implementation-2/paas-fuzzer/vcpkg/installed/x64-linux/lib"
+    "/home/tharsha/Desktop/FYP/c/kubernetes/build/**"
+    "/home/tharsha/Desktop/FYP/paas-fuzzer/vcpkg/installed/x64-linux/lib"
 )
 
 # Link
@@ -36,6 +43,23 @@ target_link_libraries(ConfigGenerator
     yaml
     websockets
     kubernetes
-    /home/kabilan/Desktop/FYP/implementation/implementation-2/paas-fuzzer/vcpkg/installed/x64-linux/lib/libjsoncpp.a
+    /home/tharsha/Desktop/FYP/paas-fuzzer/vcpkg/installed/x64-linux/lib/libjsoncpp.a
+    /usr/lib/x86_64-linux-gnu/libmysqlcppconn.so
 )
+
+# Set the directory containing your text files
+set(TEXT_FILES_DIR ${CMAKE_SOURCE_DIR}/../QueryGeneration/output)
+
+configure_file(${CMAKE_SOURCE_DIR}/../QueryGeneration/credentials_local.txt ${CMAKE_CURRENT_BINARY_DIR}/credentials_local.txt COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/../QueryGeneration/credentials_cluster.txt ${CMAKE_CURRENT_BINARY_DIR}/credentials_cluster.txt COPYONLY)
+
+# Add a custom command to copy files during the build step
+# add_custom_command(
+#     TARGET ConfigGenerator POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy_directory
+#         ${TEXT_FILES_DIR}
+#         $<TARGET_FILE_DIR:ConfigGenerator>/output
+# )
+
+file(COPY ${TEXT_FILES_DIR} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
