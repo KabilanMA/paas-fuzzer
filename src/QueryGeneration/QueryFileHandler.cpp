@@ -5,10 +5,9 @@ namespace driver {
     bool QueryFileHandler::createQueryFile(const std::string& fileName) {
         std::ofstream queryFile(fileName);
         if (queryFile.is_open()) {
-            queryFile.close();
             return true;
         } else {
-            std::cerr << "Error: Could not create query file." << std::endl;
+            std::cerr << "Error: Could not create file." << std::endl;
             return false;
         }
     }

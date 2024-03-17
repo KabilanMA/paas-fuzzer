@@ -6,12 +6,13 @@ namespace driver {
     std::chrono::high_resolution_clock::time_point LogFileHandler::stopTime;
 
     bool LogFileHandler::createLogFile(const std::string& fileName) {
-        logFile.open("output/" + fileName, std::ios::out | std::ios::app);
-        if (!logFile.is_open()) {
-            std::cerr << "Error: Could not create log file. Check permissions or directory existence." << std::endl;
+        std::ofstream logfile(fileName);
+        if (logfile.is_open()) {
+            return true;
+        } else {
+            std::cerr << "Error: Could not create file." << std::endl;
             return false;
         }
-        return true;
     }
 
     bool LogFileHandler::log(const std::string& fileName, const std::string& message) {
