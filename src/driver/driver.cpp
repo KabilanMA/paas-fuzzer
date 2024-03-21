@@ -2,15 +2,6 @@
 
 #include <unordered_map>
 
-#include <condition_variable>
-#include <mutex>
-#include <future>
-
-// Define global variables for synchronization
-std::mutex mtx;
-std::condition_variable cv;
-bool queriesWritten = false;
-
 using namespace driver;
 
 driver::DatabaseHandler dbHandlerLocal("", "", "", "");
@@ -105,13 +96,7 @@ void updatePatches(std::vector<driver::Patch> &patches, scheduler::ClusterAccess
             count += 1;
             std::string countStr = std::to_string(count);
             std::string queryFileName = "output/output_" + countStr + "/queries_" + countStr + ".txt";
-
             setupQueries(queryFileName, count);
-            // {
-            //     std::unique_lock<std::mutex> lck(mtx);
-            //     cv.wait(lck, [] { return queriesWritten; });
-            // }
-
 
             while (!clusterAccess.isPropagationComplete(initialConfig, patch, verbose))
             {
@@ -196,8 +181,6 @@ void setupQueries(const std::string &QueryFileName,  int count) {
     const std::string user_local = credentials_local["user"];
     const std::string password_local = credentials_local["password"];
 
-    //driver::DatabaseHandler dbHandlerLocal(host_local, port_local, user_local, password_local);
-
     dbHandlerLocal = driver::DatabaseHandler(host_local, port_local, user_local, password_local);
 
     // Read credentials from the file for the cluster
@@ -217,8 +200,6 @@ void setupQueries(const std::string &QueryFileName,  int count) {
     const std::string user_cluster = credentials_cluster["user"];
     const std::string password_cluster = credentials_cluster["password"];
 
-    //driver::DatabaseHandler dbHandlerCluster(host_cluster, port_cluster, user_cluster, password_cluster);
-
     dbHandlerCluster = driver::DatabaseHandler(host_cluster, port_cluster, user_cluster, password_cluster);
 
     // Check if the directory exists
@@ -229,13 +210,6 @@ void setupQueries(const std::string &QueryFileName,  int count) {
     }
 
     driver::QueryExecutor::generateQueries(QueryFileName);
-
-    // Set queriesWritten flag when finished
-    // {
-    //     std::lock_guard<std::mutex> lck(mtx);
-    //     queriesWritten = true;
-    // }
-    // cv.notify_one();
 }
 
 void processLocalData(const std::string& localFileName, const std::string& QueryFileName, driver::DatabaseHandler& dbHandlerLocal) {
@@ -248,7 +222,7 @@ void processLocalData(const std::string& localFileName, const std::string& Query
         dbHandlerLocal);
 }
 
-void processClusterData(const std::string& clusterFileName, const std::string& QueryFileName, const std::string& countStr) {
+void processClusterData(const std::string& clusterFileName, const std::string& QueryFileName, driver::DatabaseHandler& dbHandlerCluster) {
     driver::QueryExecutor::processData(
         "SELECT * FROM table_",
         clusterFileName,
@@ -273,33 +247,14 @@ void executeQueries(const std::string &QueryFileName, int count) {
     std::string errorFileName = "output/output_" + countStr + "/error_" + countStr + ".txt";
 
     // Launch threads for processing local and cluster data
-    //std::thread localThread(processLocalData, localFileName, QueryFileName, std::ref(dbHandlerLocal));
-    //std::thread clusterThread(processClusterData, clusterFileName, QueryFileName, countStr);
+    if (dbHandlerLocal.connect()){
+        std::thread localThread(processLocalData, localFileName, QueryFileName, std::ref(dbHandlerLocal));
+        if (dbHandlerCluster.connect()){
+            std::thread clusterThread(processClusterData, clusterFileName, QueryFileName, std::ref(dbHandlerCluster));
 
-    // Wait for both threads to finish
-    //localThread.join();
-    //clusterThread.join();
-
-    if (dbHandlerLocal.connect()) {
-    // Process local data
-    driver::QueryExecutor::processData(
-        "SELECT * FROM table_",
-        localFileName,
-        QueryFileName,
-        "Local Machine",
-        "Queries executed successfully in the local machine",
-        dbHandlerLocal);
-
-        if (dbHandlerCluster.connect()) {
-            // Process cluster data
-            driver::QueryExecutor::processData(
-                "SELECT * FROM table_",
-                clusterFileName,
-                QueryFileName,
-                "Kubernetes Cluster",
-                "Queries executed successfully in the Kubernetes cluster",
-                dbHandlerCluster);
-            
+            // Wait for both threads to finish
+            localThread.join();
+            clusterThread.join();
 
             // Compare local and cluster CSV files
             driver::QueryExecutor::compareCSVFiles(localFileName, clusterFileName, errorFileName);
@@ -312,12 +267,12 @@ void executeQueries(const std::string &QueryFileName, int count) {
               std::cout << "Errors found during CSV file comparison between local and cluster. Check " << errorFileName << " for details." << std::endl;
             }
         } else {
-            // std::cout << "error in cluster connection" << std::endl;
+            std::cout << "error in cluster connection" << std::endl;
+            localThread.join();
         }
     } else {
         std::cout << "error in local connection" << std::endl;
     }
-
 }
 
 
