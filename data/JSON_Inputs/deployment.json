@@ -1,0 +1,104 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "bash"
+  },
+  "spec": {
+    "replicas": {
+      "operation": "patch",
+      "type": "int",
+      "start": 1,
+      "end": 5,
+      "step": 3
+    },
+    "selector": {
+      "matchLabels": {
+        "app": "busybox"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "bash"
+        }
+      },
+      "spec": [
+        {
+          "restartPolicy": {
+            "operation": "patch",
+            "type": "enum",
+            "values": ["Always", "Never"]
+          },
+          "containers": [
+            {
+              "name": "bash",
+              "image": {
+                "operation": "patch",
+                "type": "enum",
+                "values": ["ubuntu:21.04", "ubuntu:latest"]
+              },
+              "resources": {
+                "limits": {
+                  "cpu": {
+                    "operation": "patch",
+                    "type": "enum",
+                    "values": ["300M", "200Mi"]
+                  },
+                  "memory": {
+                    "limits": {
+                      "cpu": {
+                        "operation": "patch",
+                        "type": "enum",
+                        "values": ["200M", "300Mi"]
+                      }
+                    },
+                    "requests": {
+                      "cpu": "700M",
+                      "memory": "200Mi"
+                    }
+                  },
+                  "resizePolicy": [
+                    {
+                      "resourceName": "cpu",
+                      "restartPolicy": "NotRequired"
+                    },
+                    {
+                      "resourceName": "memory",
+                      "restartPolicy": {
+                        "operation": "patch",
+                        "type": "enum",
+                        "values": ["RestartContainer", "NotRequired"]
+                      }
+                    }
+                  ],
+                  "command": ["tail", "-f", "/dev/null"]
+                }
+              }
+            }
+          ],
+          "initContainers": [
+            {
+              "name": "init-1",
+              "image": "ubuntu",
+              "command": ["sh", "-c", "sleep 1s \n"],
+              "restartPolicy": "Always"
+            }
+          ],
+          "securityContext": {
+            "sysctls": [
+              {
+                "name": {
+                  "operation": "patch",
+                  "type": "enum",
+                  "values": ["net.core.somaxconn", "net.core.somaxcon"]
+                },
+                "value": "10000"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
