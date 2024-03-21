@@ -238,6 +238,26 @@ void setupQueries(const std::string &QueryFileName,  int count) {
     // cv.notify_one();
 }
 
+void processLocalData(const std::string& localFileName, const std::string& QueryFileName, driver::DatabaseHandler& dbHandlerLocal) {
+    driver::QueryExecutor::processData(
+        "SELECT * FROM table_",
+        localFileName,
+        QueryFileName,
+        "Local Machine",
+        "Queries executed successfully in the local machine",
+        dbHandlerLocal);
+}
+
+void processClusterData(const std::string& clusterFileName, const std::string& QueryFileName, const std::string& countStr) {
+    driver::QueryExecutor::processData(
+        "SELECT * FROM table_",
+        clusterFileName,
+        QueryFileName,
+        "Kubernetes Cluster",
+        "Queries executed successfully in the Kubernetes cluster",
+        dbHandlerCluster);
+}
+
 void executeQueries(const std::string &QueryFileName, int count) {
 
     std::string countStr = std::to_string(count);
@@ -252,38 +272,48 @@ void executeQueries(const std::string &QueryFileName, int count) {
     std::string clusterFileName = "output/output_" + countStr + "/output_cluster_" + countStr + ".csv";
     std::string errorFileName = "output/output_" + countStr + "/error_" + countStr + ".txt";
 
+    // Launch threads for processing local and cluster data
+    //std::thread localThread(processLocalData, localFileName, QueryFileName, std::ref(dbHandlerLocal));
+    //std::thread clusterThread(processClusterData, clusterFileName, QueryFileName, countStr);
+
+    // Wait for both threads to finish
+    //localThread.join();
+    //clusterThread.join();
+
     if (dbHandlerLocal.connect()) {
     // Process local data
     driver::QueryExecutor::processData(
         "SELECT * FROM table_",
         localFileName,
         QueryFileName,
+        "Local Machine",
         "Queries executed successfully in the local machine",
         dbHandlerLocal);
 
-        // if (dbHandlerCluster.connect()) {
-        //     // Process cluster data
-        //     driver::QueryExecutor::processData(
-        //         "SELECT * FROM table_",
-        //         clusterFileName,
-        //         QueryFileName,
-        //         "Queries executed successfully in the cluster",
-        //         dbHandlerCluster);
+        if (dbHandlerCluster.connect()) {
+            // Process cluster data
+            driver::QueryExecutor::processData(
+                "SELECT * FROM table_",
+                clusterFileName,
+                QueryFileName,
+                "Kubernetes Cluster",
+                "Queries executed successfully in the Kubernetes cluster",
+                dbHandlerCluster);
             
 
-        //     // Compare local and cluster CSV files
-        //     driver::QueryExecutor::compareCSVFiles(localFileName, clusterFileName, errorFileName);
+            // Compare local and cluster CSV files
+            driver::QueryExecutor::compareCSVFiles(localFileName, clusterFileName, errorFileName);
 
-        //     // Print whether there were errors or not
-        //     std::ifstream errorFile(errorFileName);
-        //     if (errorFile.peek() == std::ifstream::traits_type::eof()) {
-        //         std::cout << "No errors found during CSV file comparison between local and cluster" << std::endl;
-        //     } else {
-        //       std::cout << "Errors found during CSV file comparison between local and cluster. Check " << errorFileName << " for details." << std::endl;
-        //     }
-        // } else {
-        //     // std::cout << "error in cluster connection" << std::endl;
-        // }
+            // Print whether there were errors or not
+            std::ifstream errorFile(errorFileName);
+            if (errorFile.peek() == std::ifstream::traits_type::eof()) {
+                std::cout << "No errors found during CSV file comparison between local and cluster" << std::endl;
+            } else {
+              std::cout << "Errors found during CSV file comparison between local and cluster. Check " << errorFileName << " for details." << std::endl;
+            }
+        } else {
+            // std::cout << "error in cluster connection" << std::endl;
+        }
     } else {
         std::cout << "error in local connection" << std::endl;
     }

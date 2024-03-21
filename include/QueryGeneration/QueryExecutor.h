@@ -21,10 +21,10 @@ namespace driver {
     class QueryExecutor {
     public:
         static void setupAndExecuteQueries();
-        static void executeQueries(const std::string& queryFileName, driver::DatabaseHandler& dbHandler);
+        static void executeQueries(const std::string& queryFileName, driver::DatabaseHandler& dbHandler, const std::string& connection);
         static std::map<std::string, std::string> readCredentials(const std::string& filename);
         
-        static void processData(const std::string& selectQuery, const std::string& outputCsvFilename, const std::string& queriesFile, const std::string& executionMessage, DatabaseHandler& dbHandler);
+        static void processData(const std::string& selectQuery, const std::string& outputCsvFilename, const std::string& queriesFile, const std::string& connection, const std::string& executionMessage, DatabaseHandler& dbHandler);
         static void compareCSVFiles(const std::string& localFilePath, const std::string& clusterFilePath, const std::string& outputFilePath);
         static void writeToCSV(const std::vector<std::vector<std::string>> data, const std::string filename);
 
