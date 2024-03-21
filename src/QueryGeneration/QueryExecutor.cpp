@@ -105,15 +105,13 @@ namespace driver {
     }
 
     void QueryExecutor::processData(const std::string &selectQuery, const std::string &outputCsvFilename, const std::string &queriesFile, const std::string& connection, const std::string &executionMessage, driver::DatabaseHandler& dbHandler) {
+        
         driver::QueryFileHandler::createQueryFile(outputCsvFilename);
-        //std::cout << "success" << std::endl;
         driver::QueryExecutor::executeQueries(queriesFile, dbHandler, connection);
         std::cout << executionMessage << std::endl;
-        //std::cout << "success1" << std::endl;
         std::ofstream csvFile(outputCsvFilename);
-        //std::cout << "success2" << std::endl;
+
         for (int a = 0; a < 5; a++) {
-            //std::cout << "success3" << std::endl;
             std::string query = selectQuery + std::to_string(a); // Create a new query for each table
             sql::Connection* connection = dbHandler.getConnection();
             sql::Statement *stmt = connection->createStatement();
