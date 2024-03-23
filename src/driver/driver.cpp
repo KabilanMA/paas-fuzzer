@@ -4,6 +4,13 @@
 
 using namespace driver;
 
+driver::DatabaseHandler dbHandlerLocal("", "", "", "");
+driver::DatabaseHandler dbHandlerCluster("", "", "", "");
+
+// Forward declarations
+void setupQueries(const std::string &QueryFileName,  int count);
+void executeQueries(const std::string &QueryFileName, int count);
+
 bool compareByFloatValue(const driver::Patch &obj1, const driver::Patch &obj2)
 {
     return obj1.getScore() > obj2.getScore();
@@ -75,6 +82,7 @@ void updatePatches(std::vector<driver::Patch> &patches, scheduler::ClusterAccess
     apiClient_t *apiClient;
     clusterAccess.createAPI_client(&apiClient);
     // int a = 5;
+    int count = 0;
     while (true)
     {
         for (driver::Patch &patch : patches)
@@ -84,10 +92,19 @@ void updatePatches(std::vector<driver::Patch> &patches, scheduler::ClusterAccess
             auto startTime = std::chrono::high_resolution_clock::now();
             clusterAccess.patch(&initialConfig, apiClient, "default", patch, verbose);
             bool isBuggyPatch = false;
+
+            count += 1;
+            std::string countStr = std::to_string(count);
+            std::string queryFileName = "output/output_" + countStr + "/queries_" + countStr + ".txt";
+            setupQueries(queryFileName, count);
+
             while (!clusterAccess.isPropagationComplete(initialConfig, patch, verbose))
             {
                 auto endTime = std::chrono::high_resolution_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+
+                executeQueries(queryFileName, count);
+
                 if (duration.count() > driver::WAIT_TIME_MILLI_SEC)
                 {
                     // bug identified
@@ -144,6 +161,120 @@ void extractOptionalArgument(std::unordered_map<std::string, std::string> &argum
         }
     }
 }
+
+
+void setupQueries(const std::string &QueryFileName,  int count) {
+    // Read credentials from the file for local machine
+    std::map<std::string, std::string> credentials_local = driver::QueryExecutor::readCredentials("credentials_local.txt");
+
+    // Check if all required credentials are present
+    if (credentials_local.find("host") == credentials_local.end() ||
+        credentials_local.find("port") == credentials_local.end() ||
+        credentials_local.find("user") == credentials_local.end() ||
+        credentials_local.find("password") == credentials_local.end()) {
+        std::cerr << "Invalid or incomplete credentials in the file." << std::endl;
+        return;
+    }
+
+    const std::string host_local = credentials_local["host"];
+    const std::string port_local = credentials_local["port"];
+    const std::string user_local = credentials_local["user"];
+    const std::string password_local = credentials_local["password"];
+
+    dbHandlerLocal = driver::DatabaseHandler(host_local, port_local, user_local, password_local);
+
+    // Read credentials from the file for the cluster
+    std::map<std::string, std::string> credentials_cluster = driver::QueryExecutor::readCredentials("credentials_cluster.txt");
+
+    // Check if all required credentials are present
+    if (credentials_cluster.find("host") == credentials_cluster.end() ||
+        credentials_cluster.find("port") == credentials_cluster.end() ||
+        credentials_cluster.find("user") == credentials_cluster.end() ||
+        credentials_cluster.find("password") == credentials_cluster.end()) {
+        std::cerr << "Invalid or incomplete credentials in the file." << std::endl;
+        return;
+    }
+
+    const std::string host_cluster = credentials_cluster["host"];
+    const std::string port_cluster = credentials_cluster["port"];
+    const std::string user_cluster = credentials_cluster["user"];
+    const std::string password_cluster = credentials_cluster["password"];
+
+    dbHandlerCluster = driver::DatabaseHandler(host_cluster, port_cluster, user_cluster, password_cluster);
+
+    // Check if the directory exists
+    std::string countStr = std::to_string(count);
+    if (!std::filesystem::exists("output/output_" + countStr)) {
+        // Create the directory if it doesn't exist
+        std::filesystem::create_directories("output/output_" + countStr);
+    }
+
+    driver::QueryExecutor::generateQueries(QueryFileName);
+}
+
+void processLocalData(const std::string& localFileName, const std::string& QueryFileName, driver::DatabaseHandler& dbHandlerLocal) {
+    driver::QueryExecutor::processData(
+        "SELECT * FROM table_",
+        localFileName,
+        QueryFileName,
+        "Local Machine",
+        "Queries executed successfully in the local machine",
+        dbHandlerLocal);
+}
+
+void processClusterData(const std::string& clusterFileName, const std::string& QueryFileName, driver::DatabaseHandler& dbHandlerCluster) {
+    driver::QueryExecutor::processData(
+        "SELECT * FROM table_",
+        clusterFileName,
+        QueryFileName,
+        "Kubernetes Cluster",
+        "Queries executed successfully in the Kubernetes cluster",
+        dbHandlerCluster);
+}
+
+void executeQueries(const std::string &QueryFileName, int count) {
+
+    std::string countStr = std::to_string(count);
+
+    // Check if the directory exists
+    if (!std::filesystem::exists("output/output_" + countStr)) {
+        // Create the directory if it doesn't exist
+        std::filesystem::create_directories("output/output_" + countStr);
+    }
+
+    std::string localFileName = "output/output_" + countStr + "/output_local_" + countStr + ".csv";
+    std::string clusterFileName = "output/output_" + countStr + "/output_cluster_" + countStr + ".csv";
+    std::string errorFileName = "output/output_" + countStr + "/error_" + countStr + ".txt";
+
+    // Launch threads for processing local and cluster data
+    if (dbHandlerLocal.connect()){
+        std::thread localThread(processLocalData, localFileName, QueryFileName, std::ref(dbHandlerLocal));
+        if (dbHandlerCluster.connect()){
+            std::thread clusterThread(processClusterData, clusterFileName, QueryFileName, std::ref(dbHandlerCluster));
+
+            // Wait for both threads to finish
+            localThread.join();
+            clusterThread.join();
+
+            // Compare local and cluster CSV files
+            driver::QueryExecutor::compareCSVFiles(localFileName, clusterFileName, errorFileName);
+
+            // Print whether there were errors or not
+            std::ifstream errorFile(errorFileName);
+            if (errorFile.peek() == std::ifstream::traits_type::eof()) {
+                std::cout << "No errors found during CSV file comparison between local and cluster" << std::endl;
+            } else {
+              std::cout << "Errors found during CSV file comparison between local and cluster. Check " << errorFileName << " for details." << std::endl;
+            }
+        } else {
+            std::cout << "error in cluster connection" << std::endl;
+            localThread.join();
+        }
+    } else {
+        std::cout << "error in local connection" << std::endl;
+    }
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -205,13 +336,16 @@ int main(int argc, char *argv[])
     {
         printf("Initial Deployment Failed\n");
         return 1;
+        // std::cout << "Initial Deployment Failed\n" << std::endl;
     }
 
     Evaluator evaluator;
     std::thread myThread(updatePatches, std::ref(patches), std::ref(clusterAccess), inputJson, std::ref(evaluator), verbose);
     // query generator and kubernetes service connector
+    //std::thread queryThread(setupQueries);
 
     myThread.join();
+    //queryThread.join();
 
     cJSON_Delete(inputJson);
     cJSON_Delete(originalJson);

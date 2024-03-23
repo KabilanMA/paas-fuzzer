@@ -12,7 +12,7 @@
 #include <cppconn/statement.h>
 #include <cppconn/exception.h>
 
-namespace QueryGeneration {
+namespace driver {
     class QueryFileHandler {
     public:
         static bool createQueryFile(const std::string& fileName);

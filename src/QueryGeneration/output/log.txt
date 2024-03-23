@@ -1,1 +1,0 @@
-Total execution time in Local Machine: 7.135503 seconds

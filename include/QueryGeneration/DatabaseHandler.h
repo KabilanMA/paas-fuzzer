@@ -7,7 +7,7 @@
 
 #include "QueryFileHandler.h"
 
-namespace QueryGeneration {
+namespace driver{
     class DatabaseHandler {
     public:
         DatabaseHandler(const std::string& host, const std::string& port, const std::string& user, const std::string& password);
