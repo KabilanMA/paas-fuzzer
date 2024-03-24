@@ -1,127 +1,82 @@
-{
-  "apiVersion": "apps/v1",
-  "kind": "Deployment",
-  "metadata": {
-    "name": "bash"
-  },
-  "spec": {
-    "replicas": {
-      "operation": "patch",
-      "type": "int",
-      "start": 1,
-      "end": 5,
-      "step": 3
-    },
-    "selector": {
-      "matchLabels": {
-        "app": "busybox"
-      }
-    },
-    "strategy": {
-      "rollingUpdate": {
-        "maxSurge": {
-          "operation": "patch",
-          "type": "int",
-          "start": 1,
-          "end": 3,
-          "step": 1
-        },
-        "maxUnavailable": {
-          "operation": "patch",
-          "type": "int",
-          "start": 1,
-          "end": 3,
-          "step": 1
-        }
-      },
-      "type": {
-        "operation": "patch",
-        "type": "enum",
-        "values": ["RollingUpdate", "Recreate"]
-      }
-    },
-    "template": {
-      "metadata": {
-        "labels": {
-          "app": "bash"
-        }
-      },
-      "spec": [
-        {
-          "restartPolicy": {
-            "operation": "patch",
-            "type": "enum",
-            "values": ["Always", "Never"]
-          },
-          "containers": [
-            {
-              "name": "bash",
-              "image": {
-                "operation": "patch",
-                "type": "enum",
-                "values": ["ubuntu:21.04", "ubuntu:latest"]
-              },
-              "resources": {
-                "limits": {
-                  "cpu": {
-                    "operation": "patch",
-                    "type": "enum",
-                    "values": ["300M", "200Mi"]
-                  },
-                  "memory": {
-                    "limits": {
-                      "cpu": {
-                        "operation": "patch",
-                        "type": "enum",
-                        "values": ["200M", "300Mi"]
-                      }
-                    },
-                    "requests": {
-                      "cpu": "700M",
-                      "memory": "200Mi"
-                    }
-                  },
-                  "resizePolicy": [
-                    {
-                      "resourceName": "cpu",
-                      "restartPolicy": "NotRequired"
-                    },
-                    {
-                      "resourceName": "memory",
-                      "restartPolicy": {
-                        "operation": "patch",
-                        "type": "enum",
-                        "values": ["RestartContainer", "NotRequired"]
-                      }
-                    }
-                  ],
-                  "command": ["tail", "-f", "/dev/null"]
-                }
-              }
-            }
-          ],
-          "initContainers": [
-            {
-              "name": "init-1",
-              "image": "ubuntu",
-              "command": ["sh", "-c", "sleep 1s \n"],
-              "restartPolicy": "Always"
-            }
-          ],
-          "securityContext": {
-            "sysctls": [
-              {
-                "name": {
-                  "operation": "patch",
-                  "type": "enum",
-                  "values": ["net.core.somaxconn", "net.core.somaxcon"]
-                },
-                "value": "10000"
-              }
-            ]
-          }
-        }
-      ]
-    }
-  }
-}
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "4"
+    creationTimestamp: "2024-03-24T17:08:44Z"
+    generation: 6
+    name: bash
+    namespace: default
+    resourceVersion: "116382"
+    uid: fbe10003-4ddf-45b5-b77e-ffe72d1276ca
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 4
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: bash
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: bash
+      spec:
+        containers:
+        - command:
+          - tail
+          - -f
+          - /dev/null
+          image: ubuntu:latest
+          imagePullPolicy: IfNotPresent
+          name: bash
+          resources:
+            limits:
+              cpu: 200Mi
+              memory: "700"
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - command:
+          - sh
+          - -c
+          - "sleep 1s \n"
+          image: ubuntu
+          imagePullPolicy: Always
+          name: init-1
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    conditions:
+    - lastTransitionTime: "2024-03-24T17:08:44Z"
+      lastUpdateTime: "2024-03-24T17:08:44Z"
+      message: Deployment does not have minimum availability.
+      reason: MinimumReplicasUnavailable
+      status: "False"
+      type: Available
+    - lastTransitionTime: "2024-03-24T17:23:14Z"
+      lastUpdateTime: "2024-03-24T17:30:57Z"
+      message: ReplicaSet "bash-8457cf5c8f" is progressing.
+      reason: ReplicaSetUpdated
+      status: "True"
+      type: Progressing
+    observedGeneration: 6
+    replicas: 5
+    unavailableReplicas: 5
+    updatedReplicas: 2
+kind: List
+metadata:
+  resourceVersion: ""

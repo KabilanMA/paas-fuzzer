@@ -1,40 +1,40 @@
 {
-    "apiVersion": "apps/v1",
-    "kind": "Deployment",
-    "metadata": {
-      "name": "busybox-deployment"
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "busybox-deployment"
+  },
+  "spec": {
+    "replicas": {
+      "operation": "patch",
+      "type": "int",
+      "start": 1,
+      "end": 5,
+      "step": 1
     },
-    "spec": {
-      "replicas": {"operation":"patch", "type":"int", "start":1, "end": 5, "step":3},
-      "selector": {
-        "matchLabels": {
+    "selector": {
+      "matchLabels": {
+        "app": "busybox"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
           "app": "busybox"
         }
       },
-      "template": {
-        "metadata": {
-          "labels": {
-            "app": "busybox"
-          }
-        },
-        "spec": {
-          "securityContext": {
-            "sysctls": [
-              {
-                "name": {"operation":"patch", "type":"enum", "values": ["net.core.somaxconn", "net.core.somaxcon"]},
-                "value": "10000"
-              }
+      "spec": {
+        "containers": [
+          {
+            "name": "busybox-container",
+            "image": "busybox",
+            "command": [
+              "sleep",
+              "3600"
             ]
-            },
-          "containers": [
-            {
-              "name": "busybox-container",
-              "image": "busybox",
-              "command": ["sleep", "3600"]
-            }
-          ]
-        }
+          }
+        ]
       }
     }
   }
-  
+}
